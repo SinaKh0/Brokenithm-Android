@@ -40,8 +40,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mTCPSocket: Socket
 
     // state
-    private val numOfButtons = 16
-    private val numOfGaps = 16
+    private val numOfButtons = 32
+    private val numOfGaps = 0
     private val buttonWidthToGap = 7.428571f
     private val numOfAirBlock = 6
     private var mEnableTouchSize = false
@@ -62,6 +62,8 @@ class MainActivity : AppCompatActivity() {
     private var buttonWidth = 0f
     private var gapWidth = 0f
     private lateinit var mButtonRenderer: View
+    private var ledButtonWidth = 0f
+    private var ledGapWidth = 0f
 
     // vibrator
     private var mEnableVibrate = true
@@ -300,9 +302,14 @@ class MainActivity : AppCompatActivity() {
             textInfo.visibility = if (isChecked) View.VISIBLE else View.GONE
         }
 
-        gapWidth = windowWidth / (numOfButtons * buttonWidthToGap + numOfGaps)
-        buttonWidth = gapWidth * buttonWidthToGap
-        val buttonBlockWidth = buttonWidth + gapWidth
+        gapWidth = 0f
+        buttonWidth = windowWidth / numOfButtons
+        val buttonBlockWidth = buttonWidth
+
+        // LED rendering uses original 16-button layout with gaps
+        ledGapWidth = windowWidth / (16 * buttonWidthToGap + 16)
+        ledButtonWidth = ledGapWidth * buttonWidthToGap
+
         val buttonAreaHeight = windowHeight * 0.5f
         val airAreaHeight = windowHeight * 0.35f
         val airBlockHeight = (buttonAreaHeight - airAreaHeight) / numOfAirBlock
@@ -338,63 +345,43 @@ class MainActivity : AppCompatActivity() {
                     var index = pointPos.toInt()
 
                     if (mEnableTouchSize) {
-                        if (index > numOfButtons) index = numOfButtons
-                        var centerButton = index * 2
-                        if (touchedButtons.contains(centerButton)) centerButton++
-                        var leftButton = ((index - 1) * 2).coerceAtLeast(0)
-                        if (touchedButtons.contains(leftButton)) leftButton++
-                        var rightButton = ((index + 1) * 2).coerceAtMost(numOfButtons * 2)
-                        if (touchedButtons.contains(rightButton)) rightButton++
-                        var left2Button = ((index - 2) * 2).coerceAtLeast(0)
-                        if (touchedButtons.contains(left2Button)) left2Button++
-                        var right2Button = ((index + 2) * 2).coerceAtMost(numOfButtons * 2)
-                        if (touchedButtons.contains(right2Button)) right2Button++
+                        if (index > 31) index = 31
                         val currentSize = event.getSize(i)
                         maxTouchedSize = maxTouchedSize.coerceAtLeast(currentSize)
-                        touchedButtons.add(centerButton)
+                        touchedButtons.add(index)
                         when ((pointPos - index) * 4) {
                             in 0f..1f -> {
-                                touchedButtons.add(leftButton)
+                                if (index > 0) touchedButtons.add(index - 1)
                                 if (currentSize >= mExtraFatTouchSizeThreshold) {
-                                    touchedButtons.add(left2Button)
-                                    touchedButtons.add(rightButton)
+                                    if (index > 1) touchedButtons.add(index - 2)
+                                    if (index < 31) touchedButtons.add(index + 1)
                                 }
                             }
                             in 1f..3f -> {
                                 if (currentSize >= mFatTouchSizeThreshold) {
-                                    touchedButtons.add(leftButton)
-                                    touchedButtons.add(rightButton)
+                                    if (index > 0) touchedButtons.add(index - 1)
+                                    if (index < 31) touchedButtons.add(index + 1)
                                 }
                                 if (currentSize >= mExtraFatTouchSizeThreshold) {
-                                    touchedButtons.add(left2Button)
-                                    touchedButtons.add(right2Button)
+                                    if (index > 1) touchedButtons.add(index - 2)
+                                    if (index < 30) touchedButtons.add(index + 2)
                                 }
                             }
                             in 3f..4f -> {
-                                touchedButtons.add(rightButton)
+                                if (index < 31) touchedButtons.add(index + 1)
                                 if (currentSize >= mExtraFatTouchSizeThreshold) {
-                                    touchedButtons.add(leftButton)
-                                    touchedButtons.add(right2Button)
+                                    if (index > 0) touchedButtons.add(index - 1)
+                                    if (index < 30) touchedButtons.add(index + 2)
                                 }
                             }
                         }
                     } else {
-                        if (index > 15) index = 15
-                        var targetIndex = index * 2
-                        if (touchedButtons.contains(targetIndex)) targetIndex++
-                        touchedButtons.add(targetIndex)
-                        if (index > 0) {
-                            if ((pointPos - index) * 4 < 1) {
-                                targetIndex = (index - 1) * 2
-                                if (touchedButtons.contains(targetIndex)) targetIndex++
-                                touchedButtons.add(targetIndex)
-                            }
-                        } else if (index < 31) {
-                            if ((pointPos - index) * 4 > 3) {
-                                targetIndex = (index + 1) * 2
-                                if (touchedButtons.contains(targetIndex)) targetIndex++
-                                touchedButtons.add(targetIndex)
-                            }
+                        if (index > 31) index = 31
+                        touchedButtons.add(index)
+                        if (index > 0 && (pointPos - index) * 4 < 1) {
+                            touchedButtons.add(index - 1)
+                        } else if (index < 31 && (pointPos - index) * 4 > 3) {
+                            touchedButtons.add(index + 1)
                         }
                     }
                 }
@@ -836,8 +823,8 @@ class MainActivity : AppCompatActivity() {
             val color = 0xff000000 or (red.toLong() shl 16) or (green.toLong() shl 8) or blue.toLong()
             val left = drawXOffset
             val width = when (i.rem(2)) {
-                0 -> buttonWidth
-                1 -> gapWidth
+                0 -> ledButtonWidth
+                1 -> ledGapWidth
                 else -> continue
             }
             val right = left + width

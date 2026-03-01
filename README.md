@@ -10,6 +10,15 @@ Supports UDP and TCP connection to host. TCP recommended for lower latency.
   <img src="screenshots/Screenshot.jpg" width="500" alt="screenshot"/>
 </p>
 
+## Slider Zones
+
+The original Brokenithm-Android slider uses 16 touch zones. This app uses all 32 zones directly across the full screen width, matching the physical arcade slider hardware which has 32 individual capacitive sensors side by side.
+
+An alternative **Brokenithm-iOS-style mode** is available in settings which splits the screen into 16 horizontal zones, each divided into a top and bottom half for 32 total inputs, matching the behavior of Brokenithm-iOS.
+
+In settings: **Horizontal 32 Zones** - when enabled (default), the full screen width is divided into 32 equal zones mapped directly to the 32 game inputs. When disabled, switches to Brokenithm-iOS-style mode: 16 horizontal zones each split into top/bottom half.
+
+
 ## Dual Device Setup
 
 To use both apps together, run two server instances on Windows:
